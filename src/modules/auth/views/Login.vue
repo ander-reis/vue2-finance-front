@@ -6,6 +6,13 @@
         <v-card class="elevation-12">
           <v-toolbar color="primary" dark>
             <v-toolbar-title>{{ texts.toolbar }}</v-toolbar-title>
+            <v-spacer></v-spacer>
+              <v-progress-circular
+                indeterminate
+                color="white"
+                v-show="isLoading"
+                width="2"
+              ></v-progress-circular>
           </v-toolbar>
 
           <v-card-text>
@@ -49,6 +56,13 @@
             <v-btn color="primary" :disabled="$v.$invalid" @click="submit" large>{{ texts.toolbar }}</v-btn>
           </v-card-actions>
 
+          <v-snackbar v-model="showSnackbar" top>
+            {{ error }}
+            <v-btn color="pink" flat icon @click="showSnackbar = false">
+              <v-icon>close</v-icon>
+            </v-btn>
+          </v-snackbar>
+
         </v-card>
       </v-flex>
 
@@ -59,11 +73,17 @@
 <script>
 
 import { required, email, minLength } from 'vuelidate/lib/validators'
+// eslint-disable-next-line no-unused-vars
+import AuthService from './../services/auth-service'
+import { formatError } from '@/utils'
 
 export default {
   name: 'Login',
   data: () => ({
+    error: undefined,
     isLogin: true,
+    isLoading: false,
+    showSnackbar: false,
     user: {
       name: '',
       email: '',
@@ -135,11 +155,21 @@ export default {
     }
   },
   methods: {
-    log () {
-      console.log('vuelidate: ', this.$v)
-    },
-    submit () {
-      console.log('submit')
+    async submit () {
+      this.isLoading = true
+      try {
+        // teste loading, aguarda 3 segundos
+        // await new Promise(resolve => setTimeout(resolve, 3000))
+        const authData = this.isLogin ? await AuthService.login(this.user) : await AuthService.signup(this.user)
+        console.log('authData', authData)
+        this.$router.push(this.$route.query.redirect || '/dashboard')
+      } catch (error) {
+        console.log(error)
+        this.error = formatError(error.message)
+        this.showSnackbar = true
+      } finally {
+        this.isLoading = false
+      }
     }
   }
 }

@@ -1,0 +1,2 @@
+// corrigi erros
+npm run lint --fix
