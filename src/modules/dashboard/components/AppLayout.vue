@@ -2,6 +2,14 @@
   <div>
     <app-toolbar v-model="drawer"></app-toolbar>
     <app-menu v-model="drawer"></app-menu>
+
+    <v-container grid-list-md>
+      <v-layout>
+        <v-flex xs12>
+          <slot></slot>
+        </v-flex>
+      </v-layout>
+    </v-container>
   </div>
 </template>
 
