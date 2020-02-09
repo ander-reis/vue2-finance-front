@@ -4,7 +4,7 @@
 
       <v-flex xs12 sm6 md4 lg3>
         <v-card class="elevation-12">
-          <v-toolbar color="primary" dark>
+          <v-toolbar color="primary">
             <v-toolbar-title>{{ texts.toolbar }}</v-toolbar-title>
             <v-spacer></v-spacer>
               <v-progress-circular
@@ -58,7 +58,7 @@
 
           <v-snackbar v-model="showSnackbar" top>
             {{ error }}
-            <v-btn color="pink" flat icon @click="showSnackbar = false">
+            <v-btn color="pink" icon @click="showSnackbar = false">
               <v-icon>close</v-icon>
             </v-btn>
           </v-snackbar>

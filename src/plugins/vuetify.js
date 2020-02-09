@@ -16,12 +16,7 @@ export default new Vuetify({
     iconfont: 'md'
   },
   theme: {
-    primary: colors.teal.darken1,
-    accent: colors.indigo.darken1,
-    info: colors.blue,
-    error: colors.pink.darken2,
-    success: colors.teal.lighten1,
-    warning: colors.purple.darken1,
+    dark: true,
     themes: {
       light: {
         primary: colors.red.darken1, // #E53935
