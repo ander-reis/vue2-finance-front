@@ -1,6 +1,8 @@
 <template>
   <div>
 
+    <total-balance class="mb-2"></total-balance>
+
     <toolbar-by-month
       class="mb-2"
       format="MM-YYYY"
@@ -42,6 +44,7 @@
 import moment from 'moment'
 import RecordsListItem from './RecordsListItem'
 import ToolbarByMonth from './ToolbarByMonth'
+import TotalBalance from './TotalBalance'
 import RecordsService from './../services/records-service'
 import amountColorMixin from './../mixins/amount-color'
 import formatCurrencyMixin from '@/mixins/format-currency'
@@ -51,7 +54,8 @@ export default {
   name: 'RecordsList',
   components: {
     RecordsListItem,
-    ToolbarByMonth
+    ToolbarByMonth,
+    TotalBalance
   },
   mixins: [
     formatCurrencyMixin,
