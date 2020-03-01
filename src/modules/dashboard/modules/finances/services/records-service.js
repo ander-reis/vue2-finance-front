@@ -1,15 +1,74 @@
 import apollo from '@/plugins/apollo'
 import moment from 'moment'
+import { from } from 'rxjs'
+import { map } from 'rxjs/operators'
 
+import RecordCreateMutation from './../graphql/RecordCreate.graphql'
 import RecordsQuery from './../graphql/Records.graphql'
 import TotalBalanceQuery from './../graphql/TotalBalance.graphql'
 
-const records = async variables => {
-  const response = await apollo.query({
+// anterior a aula 468
+// const createRecord = async variables => {
+//   const response = await apollo.mutate({
+//     mutation: RecordCreateMutation,
+//     variables
+//   })
+//   return response.data.createRecord
+// }
+
+const createRecord = async variables => {
+  const response = await apollo.mutate({
+    mutation: RecordCreateMutation,
+    variables,
+    update: (proxy, { data: { createRecord } }) => {
+      // console.log('Proxy: ', proxy)
+      // console.log('Mutation: ', mutation)
+
+      const month = moment(createRecord.date.substr(0, 10)).format('MM-YYYY')
+      const variables = { month }
+
+      try {
+        // lê query cache apollo
+        const recordsData = proxy.readQuery({
+          query: RecordsQuery,
+          variables
+        })
+
+        // reatribui valores
+        recordsData.records = [...recordsData.records, createRecord]
+
+        // reescreve query cache apollo
+        proxy.writeQuery({
+          query: RecordsQuery,
+          variables,
+          data: recordsData
+        })
+      } catch (e) {
+        console.log('Query "records" não foi criada ainda!', e)
+      }
+    }
+  })
+  return response.data.createRecord
+}
+
+// anterior a aula 467
+// const records = async variables => {
+//   const response = await apollo.query({
+//     query: RecordsQuery,
+//     variables
+//   })
+//   return response.data.records
+// }
+
+const records = variables => {
+  const queryRef = apollo.watchQuery({
     query: RecordsQuery,
     variables
   })
-  return response.data.records
+  return from(queryRef)
+    .pipe(
+      map(res => res.data.records)
+    )
 }
 
 const totalBalance = async () => {
@@ -23,6 +82,7 @@ const totalBalance = async () => {
 }
 
 export default {
+  createRecord,
   records,
   totalBalance
 }
