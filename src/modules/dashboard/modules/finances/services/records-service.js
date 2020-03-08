@@ -27,6 +27,7 @@ const createRecord = async variables => {
       const month = moment(createRecord.date.substr(0, 10)).format('MM-YYYY')
       const variables = { month }
 
+      // insere record
       try {
         // lê query cache apollo
         const recordsData = proxy.readQuery({
@@ -45,6 +46,30 @@ const createRecord = async variables => {
         })
       } catch (e) {
         console.log('Query "records" não foi criada ainda!', e)
+      }
+
+      // recalcula totalBalance
+      try {
+        const currentDate = moment().endOf('day')
+        const recordDate = moment(createRecord.date.substr(0, 10))
+        const variables = { date: currentDate.format('YYYY-MM-DD') }
+
+        if (recordDate.isBefore(currentDate)) {
+          const totalBalanceData = proxy.readQuery({
+            query: TotalBalanceQuery,
+            variables
+          })
+
+          totalBalanceData.totalBalance = +(totalBalanceData.totalBalance + createRecord.amount).toFixed(2)
+
+          proxy.writeQuery({
+            query: TotalBalanceQuery,
+            variables,
+            data: totalBalanceData
+          })
+        }
+      } catch (e) {
+        console.log('Query "totalBalance" não foi criada ainda!', e)
       }
     }
   })
