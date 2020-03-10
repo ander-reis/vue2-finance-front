@@ -17,7 +17,8 @@ const onLogin = async (apollo, token) => {
   await resetApolloClient(apollo)
 }
 
-const link = new HttpLink({ uri: 'http://localhost:4000' })
+// const link = new HttpLink({ uri: 'http://localhost:4000' })
+const link = new HttpLink({ uri: 'http://localhost:8000/graphql' })
 
 const authLink = new ApolloLink((operation, forward) => {
   const { headers } = operation.getContext()
