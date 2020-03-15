@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators'
 import CategoriesQuery from './../graphql/Categories.graphql'
 import CategoryCreateMutation from './../graphql/CategoryCreate.graphql'
 
-const categories = ({ operation }) => {
+const categories = ({ operation } = {}) => {
   const queryRef = apollo.watchQuery({
     query: CategoriesQuery,
     variables: {
@@ -39,7 +39,7 @@ const createCategory = async variables => {
           data
         })
       } catch (e) {
-        console.log('Query "categories" ainda não foi criada!')
+        console.log('Query "categories" ainda não foi criada!', e)
       }
     }
   })
