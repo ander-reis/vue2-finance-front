@@ -1,3 +1,5 @@
+import colors from 'vuetify/es5/util/colors'
+
 const errorHandler = (err, vm, info) => {
   console.log('VUE [error handler]:', err, info)
   const jwtErrors = ['jwt malformed', 'jwt expired', 'jwt not active', 'invalid token']
@@ -34,6 +36,47 @@ const idx = (object, keyPath) => {
   )
 }
 
+const generateChartOptions = (type) => {
+  let tooltips = {}
+  switch (type) {
+    case 'bar':
+      tooltips = {
+        callbacks: {
+          title () {},
+          label (tooltip, data) {
+            return data.datasets[tooltip.datasetIndex].label
+          }
+        }
+      }
+      break
+
+    case 'doughnut':
+      tooltips = {
+        callbacks: {
+          label (tooltip, data) {
+            const label = data.labels[tooltip.index]
+            const value = currencyFormatter().format(data.datasets[tooltip.datasetIndex].data[tooltip.index])
+            return `${label}: ${value}`
+          }
+        }
+      }
+      break
+  }
+
+  const scales = {
+    yAxes: [{
+      ticks: {
+        beginAtZero: true
+      }
+    }]
+  }
+
+  return {
+    scales,
+    tooltips
+  }
+}
+
 const generateChartData = ({ items, keyToGroup, keyOfValue, aliases, type, backgroundColors }) => {
   const grouped = groupBy(items, keyToGroup, idx)
   const response = {}
@@ -46,13 +89,25 @@ const generateChartData = ({ items, keyToGroup, keyOfValue, aliases, type, backg
 
   switch (type) {
     case 'bar':
+
+      const aliasesKeys = Object.keys(aliases)
+
       return {
         datasets: labels.map((label, index) => ({
           label: `${label}: ${currencyFormatter().format(response[label])}`,
-          data: [response[label]],
-          backgroundColors: backgroundColors[index],
+          data: [response[label] >= 0 ? response[label] : -response[label]],
+          backgroundColor: backgroundColors[aliasesKeys[index]] || backgroundColors[index],
           borderWidth: 0
         }))
+      }
+    case 'doughnut':
+      return {
+        datasets: [{
+          data: labels.map(label => response[label] >= 0 ? response[label] : -response[label]),
+          backgroundColor: backgroundColors || generateColors(labels.length),
+          borderWidth: 0
+        }],
+        labels: items.length > 0 ? labels : []
       }
   }
 }
@@ -60,10 +115,12 @@ const generateChartData = ({ items, keyToGroup, keyOfValue, aliases, type, backg
 const generateChartConfigs = (opts) => {
   const { type } = opts
   const data = generateChartData(opts)
+  const options = generateChartOptions(type)
 
   return {
     type,
-    data
+    data,
+    options
   }
 }
 
@@ -73,6 +130,42 @@ const currencyFormatter = ({ locale, currency } = { locale: 'pt-BR', currency: '
     currency
   })
 }
+
+const generateColors = (length) => {
+  const palletes = Object.keys(colors)
+    .filter(pallete => pallete !== 'shades')
+
+  const tones = [
+    'base',
+    'darken1',
+    'darken2',
+    'darken3',
+    'darken4',
+    'lighten1',
+    'lighten2',
+    'lighten3',
+    'lighten4',
+    'lighten5'
+  ]
+
+  let currentPallete = 0
+  let currentTone = 0
+
+  return Array(length).fill().map((item, index) => {
+    const color = colors[palletes[currentPallete]][tones[currentTone]]
+
+    currentPallete++
+
+    if ((index + 1) % palletes.length === 0) {
+      currentPallete = 0
+      currentTone++
+    }
+
+    return color
+  })
+}
+
+// console.log('Colors', generateColors(10))
 
 const registerVuexModule = (rootStore, moduleName, store) => {
   if (!(moduleName in rootStore._modules.root._children)) {

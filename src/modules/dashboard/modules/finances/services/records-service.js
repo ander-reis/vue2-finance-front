@@ -104,6 +104,7 @@ const records = variables => {
       query: RecordsQuery,
       variables
     })
+
     recordsWatchedQueries[hashKey] = queryRef
   }
   return from(queryRef)
@@ -119,6 +120,7 @@ const totalBalance = async () => {
       date: moment().format('YYYY-MM-DD')
     }
   })
+  console.log('totalBalance: ', response)
   return response.data.totalBalance
 }
 

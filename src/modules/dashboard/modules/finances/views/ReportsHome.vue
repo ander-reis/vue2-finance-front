@@ -3,9 +3,9 @@
     <v-flex xs12>
       <toolbar-by-month
         format="MM-YYYY"
-        color="primary"
         :month="month || $route.query.month"
         @month="changeMonth"
+        :color="color"
       ></toolbar-by-month>
     </v-flex>
 
@@ -29,6 +29,7 @@ import { mapActions, mapState } from 'vuex'
 import { Subject } from 'rxjs'
 import { mergeMap } from 'rxjs/operators'
 
+import { generateChartConfigs } from '@/utils'
 import RecordsService from './../services/records-service'
 import ToolbarByMonth from '../components/ToolbarByMonth'
 
@@ -38,6 +39,8 @@ export default {
     ToolbarByMonth
   },
   data: () => ({
+    chartIncomesExpenses: undefined,
+    chartCategoryExpenses: undefined,
     charts: [
       { title: 'Receitas vs Despesas', refId: 'chartIncomesExpenses' },
       { title: 'Despesas por Categoria', refId: 'chartCategoryExpenses' }
@@ -47,7 +50,13 @@ export default {
     subscriptions: []
   }),
   computed: {
-    ...mapState('finances', ['month'])
+    ...mapState('finances', ['month']),
+    recordSum () {
+      return this.records.reduce((acc, record) => acc + record.amount, 0)
+    },
+    color () {
+      return this.recordSum < 0 ? 'error' : 'primary'
+    }
   },
   created () {
     this.setTitle({ title: 'Relatórios' })
@@ -67,40 +76,42 @@ export default {
       this.setMonth({ month })
       this.monthSubject$.next(month)
     },
-    setCharts () {
-      const ctx = this.$refs.chartIncomesExpenses[0].getContext('2d')
-      // eslint-disable-next-line no-unused-vars
-      const myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          datasets: [
-            {
-              data: [500],
-              label: 'Receitas',
-              backgroundColor: [
-                this.$vuetify.theme.themes.dark.primary
-              ]
-            },
-            {
-              data: [350],
-              label: 'Despesas',
-              backgroundColor: [
-                this.$vuetify.theme.themes.dark.error
-              ]
-            }
-          ]
-        },
-        options: {
-          scales: {
-            yAxes: [{
-              ticks: {
-                beginAtZero: true
-              }
-            }]
-          }
+    updateOrCreateChart (chartId, options) {
+      if (this[chartId]) {
+        this[chartId].data.datasets = options.data.datasets
+        if (options.data.labels) {
+          this[chartId].data.labels = options.data.labels
         }
-      })
-      console.log('vuetify: ', this.$vuetify)
+        this[chartId].update()
+        return this[chartId]
+      }
+
+      const ref = Array.isArray(this.$refs[chartId]) ? this.$refs[chartId][0] : this.$refs[chartId]
+      const ctx = ref.getContext('2d')
+      this[chartId] = new Chart(ctx, options)
+      return this[chartId]
+    },
+    setCharts () {
+      // receitas e despesas
+      this.updateOrCreateChart('chartIncomesExpenses', generateChartConfigs({
+        type: 'bar',
+        items: this.records,
+        keyToGroup: 'type',
+        keyOfValue: 'amount',
+        aliases: { DEBIT: 'Despesas', CREDIT: 'Receitas' },
+        backgroundColors: {
+          CREDIT: this.$vuetify.theme.themes.dark.primary,
+          DEBIT: this.$vuetify.theme.themes.dark.error
+        }
+      }))
+
+      // despesas por categoria
+      this.updateOrCreateChart('chartCategoryExpenses', generateChartConfigs({
+        type: 'doughnut',
+        items: this.records.filter(r => r.type === 'DEBIT'),
+        keyToGroup: 'category.description',
+        keyOfValue: 'amount'
+      }))
     },
     setRecords () {
       this.subscriptions.push(
